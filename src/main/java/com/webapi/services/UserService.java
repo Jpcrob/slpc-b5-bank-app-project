@@ -1,41 +1,19 @@
 package com.webapi.services;
 
-import com.webapi.entity.Balance;
 import com.webapi.entity.User;
-import com.webapi.repository.BalanceRepository;
-import com.webapi.repository.UserRepository;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+public interface UserService {
 
-@Service
-public class UserService implements IUserService {
+    Optional<User> findByUsername(String username);
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private BalanceRepository balanceRepository;
+    Optional<User> findByEmail(String email);
 
-    public void createUserWithInitialBalance(User user, int initialBalance) {
-        userRepository.save(user);
+    Optional<User> findByMobile(String mobile);
 
-        Balance balance = new Balance();
-        balance.setAmount(initialBalance);
-        balance.setUser(user);
-        balanceRepository.save(balance);
-    }
+    void createUserWithInitialBalance(User user, int initialBalance);
 
-    public Optional<User> findByUsername(String username) {
-        return Optional.ofNullable(userRepository.findByUsername(username));
-    }
 
-    public Optional<User> findByEmail(String email) {
-        return Optional.ofNullable(userRepository.findByEmail(email));
-    }
-
-    public Optional<User> findByMobile(String mobile) {
-        return Optional.ofNullable(userRepository.findByMobile(mobile));
-    }
 }
+

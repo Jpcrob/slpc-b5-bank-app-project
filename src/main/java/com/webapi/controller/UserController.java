@@ -5,7 +5,8 @@ import com.webapi.repository.BalanceRepository;
 import com.webapi.repository.UserRepository;
 import com.webapi.DTO.LoginRequest;
 
-import com.webapi.services.IUserService;
+import com.webapi.services.UserService;
+import com.webapi.util.GenericResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ import java.util.Optional;
 @RequestMapping(path = "/user")
 public class UserController {
     @Autowired
-    private IUserService IUserService;
+    private UserService userService;
     @Autowired
     private UserRepository userRepository;
 
@@ -25,26 +26,28 @@ public class UserController {
     private BalanceRepository balanceRepository;
 
     @PostMapping("/add")
-    public ResponseEntity<User> addNewUser(@RequestBody(required = false) User newUser) {
+    public ResponseEntity<GenericResponse<User>> addNewUser(@RequestBody(required = false) User newUser) {
 
         String username = newUser.getUsername();
         String email = newUser.getEmail();
         String mobile = newUser.getMobile();
 
-        if (!IUserService.findByUsername(username).isPresent() &&
-                !IUserService.findByEmail(email).isPresent() &&
-                !IUserService.findByMobile(mobile).isPresent()) {
+        if (!userService.findByUsername(username).isPresent() &&
+                !userService.findByEmail(email).isPresent() &&
+                !userService.findByMobile(mobile).isPresent()) {
 
-            IUserService.createUserWithInitialBalance(newUser, 1000);
+            userService.createUserWithInitialBalance(newUser, 1000);
 
-            return new ResponseEntity<>(newUser, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(GenericResponse.<User>success(newUser, "User created successfully"));
         } else {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(GenericResponse.<User>error("User already exists or invalid input"));
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<GenericResponse<String>> loginUser(@RequestBody LoginRequest loginRequest) {
         String username = loginRequest.username();
         String password = loginRequest.password();
 
@@ -52,12 +55,14 @@ public class UserController {
             Optional<User> userOptional = userRepository.findByUsernameAndPassword(username, password);
 
             if (userOptional.isPresent()) {
-                return new ResponseEntity<>("Login successful", HttpStatus.OK);
+                return ResponseEntity.ok(GenericResponse.<String>success("Login successful", "User authenticated"));
             } else {
-                return new ResponseEntity<>("Invalid username or password", HttpStatus.UNAUTHORIZED);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(GenericResponse.<String>error("Invalid username or password"));
             }
         } else {
-            return new ResponseEntity<>("Invalid input", HttpStatus.BAD_REQUEST);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(GenericResponse.<String>error("Invalid input"));
         }
     }
 
@@ -67,14 +72,15 @@ public class UserController {
     }
 
     @GetMapping(path = "{id}")
-    public ResponseEntity<User> getTutorialById(@PathVariable("id") int id) {
+    public ResponseEntity<GenericResponse<User>> getTutorialById(@PathVariable("id") int id) {
 
         Optional<User> userData = userRepository.findById(id);
 
         if (userData.isPresent()) {
-            return new ResponseEntity<>(userData.get(), HttpStatus.OK);
+            return ResponseEntity.ok(GenericResponse.<User>success(userData.get(), "User found"));
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(GenericResponse.<User>error("User not found"));
         }
     }
 
