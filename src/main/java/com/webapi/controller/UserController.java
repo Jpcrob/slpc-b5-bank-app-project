@@ -83,5 +83,16 @@ public class UserController {
                     .body(GenericResponse.<User>error("User not found"));
         }
     }
+    @GetMapping(path = "/username/{username}")
+    public ResponseEntity<GenericResponse<User>> getUserByUsername(@PathVariable("username") String username) {
 
+        Optional<User> user = Optional.ofNullable(userRepository.findByUsername(username));
+
+        if (user.isPresent()) {
+            return ResponseEntity.ok(GenericResponse.<User>success(user.get(), "User found"));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(GenericResponse.<User>error("User not found"));
+        }
+    }
 }
